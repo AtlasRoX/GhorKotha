@@ -35,7 +35,7 @@ interface Product {
   price: number
   original_price?: number
   image_url?: string
-  image_urls?: string[]
+  image_urls?: string[] | string
   stock_quantity: number
   category_id: string
   is_active: boolean
@@ -67,11 +67,22 @@ export default function ProductDetail({ product, relatedProducts }: ProductDetai
     setIsWishlisted(wishlist.includes(product.id))
   }, [product.id])
 
-  // Get all available images
   const allImages = []
   if (product.image_url) allImages.push(product.image_url)
-  if (product.image_urls && Array.isArray(product.image_urls)) {
-    allImages.push(...product.image_urls)
+
+  // Handle image_urls field (JSONB array from database)
+  if (product.image_urls) {
+    try {
+      let imageUrlsArray: string[] = []
+      if (typeof product.image_urls === "string") {
+        imageUrlsArray = JSON.parse(product.image_urls)
+      } else if (Array.isArray(product.image_urls)) {
+        imageUrlsArray = product.image_urls
+      }
+      allImages.push(...imageUrlsArray)
+    } catch (error) {
+      console.error("Error parsing image_urls:", error)
+    }
   }
 
   // Remove duplicates and filter out empty strings
@@ -244,29 +255,43 @@ export default function ProductDetail({ product, relatedProducts }: ProductDetai
                 মাত্র {product.stock_quantity} টি বাকি!
               </Badge>
             )}
+            {displayImages.length > 1 && (
+              <div className="absolute bottom-4 right-4 bg-black/70 text-white px-2 py-1 rounded text-sm">
+                {selectedImageIndex + 1} / {displayImages.length}
+              </div>
+            )}
           </div>
 
           {/* Thumbnail Images */}
           {displayImages.length > 1 && (
-            <div className="flex gap-2 overflow-x-auto">
-              {displayImages.map((image, index) => (
-                <button
-                  key={index}
-                  onClick={() => setSelectedImageIndex(index)}
-                  className={`flex-shrink-0 w-20 h-20 rounded-md overflow-hidden border-2 transition-colors ${
-                    selectedImageIndex === index ? "border-primary" : "border-border hover:border-primary/50"
-                  }`}
-                >
-                  <Image
-                    src={image || "/placeholder.svg"}
-                    alt={`${product.name_bn || product.name} ${index + 1}`}
-                    width={80}
-                    height={80}
-                    className="object-cover w-full h-full"
-                  />
-                </button>
-              ))}
+            <div className="space-y-2">
+              <p className="text-sm font-medium text-muted-foreground">পণ্যের ছবি ({displayImages.length}টি)</p>
+              <div className="flex gap-2 overflow-x-auto pb-2">
+                {displayImages.map((image, index) => (
+                  <button
+                    key={index}
+                    onClick={() => setSelectedImageIndex(index)}
+                    className={`flex-shrink-0 w-20 h-20 rounded-md overflow-hidden border-2 transition-all duration-200 ${
+                      selectedImageIndex === index
+                        ? "border-primary ring-2 ring-primary/20 scale-105"
+                        : "border-border hover:border-primary/50 hover:scale-102"
+                    }`}
+                  >
+                    <Image
+                      src={image || "/placeholder.svg"}
+                      alt={`${product.name_bn || product.name} ${index + 1}`}
+                      width={80}
+                      height={80}
+                      className="object-cover w-full h-full"
+                    />
+                  </button>
+                ))}
+              </div>
             </div>
+          )}
+
+          {displayImages.length === 1 && displayImages[0] !== "/placeholder.svg?height=400&width=400" && (
+            <p className="text-sm text-muted-foreground text-center">ছবিতে ক্লিক করে বড় করে দেখুন</p>
           )}
         </div>
 

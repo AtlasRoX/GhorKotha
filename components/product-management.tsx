@@ -235,6 +235,27 @@ export function ProductManagement({ products, categories }: ProductManagementPro
   }
 
   const openEditDialog = (product: any) => {
+    let imageUrls: string[] = []
+
+    // Handle image_urls field (JSONB array)
+    if (product.image_urls) {
+      try {
+        if (typeof product.image_urls === "string") {
+          imageUrls = JSON.parse(product.image_urls)
+        } else if (Array.isArray(product.image_urls)) {
+          imageUrls = product.image_urls
+        }
+      } catch (error) {
+        console.error("Error parsing image_urls:", error)
+        imageUrls = []
+      }
+    }
+
+    // Fallback to single image_url if no image_urls array
+    if (imageUrls.length === 0 && product.image_url) {
+      imageUrls = [product.image_url]
+    }
+
     setFormData({
       name: product.name || "",
       name_bn: product.name_bn || "",
@@ -246,7 +267,7 @@ export function ProductManagement({ products, categories }: ProductManagementPro
       stock_quantity: product.stock_quantity?.toString() || "",
       is_active: product.is_active || false,
       is_featured: product.is_featured || false,
-      image_urls: product.image_urls || (product.image_url ? [product.image_url] : []), // Handle both single and multiple images
+      image_urls: imageUrls, // Use the properly parsed image URLs array
     })
     setSelectedProduct(product)
     setIsEditDialogOpen(true)
@@ -420,9 +441,23 @@ export function ProductManagement({ products, categories }: ProductManagementPro
                     fill
                     className="object-cover"
                   />
-                  {product.image_urls && product.image_urls.length > 1 && (
+                  {((product.image_urls &&
+                    ((typeof product.image_urls === "string" && JSON.parse(product.image_urls).length > 1) ||
+                      (Array.isArray(product.image_urls) && product.image_urls.length > 1))) ||
+                    (product.image_urls && product.image_url && product.image_urls !== product.image_url)) && (
                     <div className="absolute bottom-0 right-0 bg-primary text-primary-foreground text-xs px-1 rounded-tl">
-                      +{product.image_urls.length - 1}
+                      +{(() => {
+                        try {
+                          if (typeof product.image_urls === "string") {
+                            return JSON.parse(product.image_urls).length - 1
+                          } else if (Array.isArray(product.image_urls)) {
+                            return product.image_urls.length - 1
+                          }
+                          return 0
+                        } catch {
+                          return 0
+                        }
+                      })()}
                     </div>
                   )}
                 </div>

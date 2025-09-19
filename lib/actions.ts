@@ -236,6 +236,7 @@ export async function createProduct(prevState: any, formData: FormData) {
       is_active: formData.get("is_active") === "true",
       is_featured: formData.get("is_featured") === "true",
       image_url: parsedImageUrls[0] || null, // Primary image
+      image_urls: parsedImageUrls.length > 0 ? JSON.stringify(parsedImageUrls) : null,
     }
 
     const { data, error: productError } = await supabase.from("products").insert(productData).select().single()
@@ -294,6 +295,7 @@ export async function updateProduct(prevState: any, formData: FormData) {
       is_active: formData.get("is_active") === "true",
       is_featured: formData.get("is_featured") === "true",
       image_url: parsedImageUrls[0] || null, // Primary image
+      image_urls: parsedImageUrls.length > 0 ? JSON.stringify(parsedImageUrls) : null,
       updated_at: new Date().toISOString(),
     }
 
