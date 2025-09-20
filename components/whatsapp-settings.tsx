@@ -44,7 +44,7 @@ export function WhatsAppSettings({ settings }: WhatsAppSettingsProps) {
 📦 *অর্ডারের বিবরণ:*
 {order_details}
 
-💰 *মোট: ৳{total_amount} + Delivary Charge*
+💰 *মোট: ৳{total_amount} + Delivery Charge*
 
 {notes}
 
